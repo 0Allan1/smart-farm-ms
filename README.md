@@ -360,10 +360,6 @@ smart-farm-ms/
 
 ---
 
-## 📄 License
 
-This project is licensed under the ISC License.
-
----
 
 *Built for the Smart Farm Management System project — Empowering Rwandan farmers through digital agriculture.*
