@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String   @unique
+  email     String?  @unique
+  password  String
+  role      String   @default("Farmer")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  alerts    Alert[]
+  farms     Farm[]
+  shareCodes ShareCode[]
+  farmerAccess OfficerAccess[] @relation("FarmerAccess")
+  officerManaged OfficerAccess[] @relation("OfficerManaged")
+  advice    OfficerAdvice[]
+}
+
+model Farm {
+  id        String   @id @default(uuid())
+  name      String
+  size      Float
+  soilType  String
+  location  String
+  farmerId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  crops     Crop[]
+  farmer    User     @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+}
+
+model Crop {
+  id          String   @id @default(uuid())
+  name        String
+  variation   String?
+  plantedDate DateTime
+  growthStage String   @default("Seedling")
+  isManualStage Boolean @default(false)
+  yield       Float?
+  status      String   @default("Active")
+  farmId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  farm        Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  activities  Activity[]
+  advice      OfficerAdvice[]
+}
+
+model Activity {
+  id        String   @id @default(uuid())
+  type      String   // "Irrigation", "Fertilization", "PestReport"
+  amount    Float?   
+  unit      String?  
+  notes     String?
+  metadata  Json?    // For storing questionnaire answers
+  cropId    String
+  createdAt DateTime @default(now())
+  crop      Crop     @relation(fields: [cropId], references: [id], onDelete: Cascade)
+}
+
+model Alert {
+  id        String   @id @default(uuid())
+  type      String
+  severity  String
+  message   String
+  read      Boolean  @default(false)
+  userId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ShareCode {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  farmerId  String
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  farmer    User     @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+}
+
+model OfficerAccess {
+  id        String   @id @default(uuid())
+  farmerId  String
+  officerId String
+  status    String   @default("PENDING") // PENDING, APPROVED, DENIED
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  farmer    User     @relation("FarmerAccess", fields: [farmerId], references: [id], onDelete: Cascade)
+  officer   User     @relation("OfficerManaged", fields: [officerId], references: [id], onDelete: Cascade)
+}
+
+model OfficerAdvice {
+  id        String   @id @default(uuid())
+  content   String
+  cropId    String
+  officerId String
+  createdAt DateTime @default(now())
+  
+  crop      Crop     @relation(fields: [cropId], references: [id], onDelete: Cascade)
+  officer   User     @relation(fields: [officerId], references: [id])
+}
