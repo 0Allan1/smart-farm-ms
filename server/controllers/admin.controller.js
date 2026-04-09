@@ -109,8 +109,42 @@ const provisionOfficer = async (req, res) => {
   }
 };
 
+const broadcastAlert = async (req, res) => {
+  try {
+    if (req.user.role !== 'Admin') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const { type, severity, message } = req.body;
+    if (!type || !severity || !message) {
+      return res.status(400).json({ error: 'Type, severity, and message are required' });
+    }
+
+    // Fetch all user IDs
+    const users = await prisma.user.findMany({ select: { id: true } });
+    
+    // Create alerts for all users
+    const alertData = users.map(user => ({
+      type,
+      severity,
+      message,
+      userId: user.id
+    }));
+
+    await prisma.alert.createMany({
+      data: alertData
+    });
+
+    res.status(201).json({ message: `Broadcast sent successfully to ${users.length} users.` });
+  } catch (error) {
+    console.error('Broadcast alert error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 module.exports = {
   getSystemStats,
   getAllUsers,
-  provisionOfficer
+  provisionOfficer,
+  broadcastAlert
 };

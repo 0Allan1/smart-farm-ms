@@ -12,6 +12,8 @@ const AdminDashboard = () => {
   const [showProvisionModal, setShowProvisionModal] = useState(false);
   const [officerForm, setOfficerForm] = useState({ name: '', phone: '', email: '', password: '' });
   const [provisioning, setProvisioning] = useState(false);
+  const [broadcastForm, setBroadcastForm] = useState({ type: 'Announcement', severity: 'Info', message: '' });
+  const [broadcasting, setBroadcasting] = useState(false);
 
   useEffect(() => {
     const fetchAdminData = async () => {
@@ -52,6 +54,22 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleSendBroadcast = async (e) => {
+    e.preventDefault();
+    if (!window.confirm('Are you sure you want to send this alert to ALL users?')) return;
+    
+    setBroadcasting(true);
+    try {
+      await api.post('/admin/broadcast', broadcastForm);
+      setBroadcastForm({ type: 'Announcement', severity: 'Info', message: '' });
+      alert('Broadcast successfully sent to all registered users!');
+    } catch (error) {
+      alert('Error: ' + (error.response?.data?.error || error.message));
+    } finally {
+      setBroadcasting(false);
+    }
+  };
+
   const renderActiveView = () => {
     switch (activeTab) {
       case 'health':
@@ -59,6 +77,7 @@ const AdminDashboard = () => {
       case 'users':
         return renderUserManagement();
       case 'broadcast':
+        return renderBroadcastView();
       case 'config':
       case 'backups':
         return renderPlaceholder();
@@ -237,6 +256,75 @@ const AdminDashboard = () => {
             )}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+
+  const renderBroadcastView = () => (
+    <div className="animate-fade-in flex-col gap-lg" style={{ maxWidth: '800px' }}>
+      <div className="card">
+        <h2 style={{ marginTop: 0 }}>Broadcast System Alert</h2>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+          Send a notification to every registered user (Farmers and Extension Officers).
+        </p>
+        
+        <form onSubmit={handleSendBroadcast} className="flex-col gap-md">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="form-group">
+              <label className="form-label">Alert Type</label>
+              <select 
+                className="form-input" 
+                value={broadcastForm.type} 
+                onChange={e => setBroadcastForm({...broadcastForm, type: e.target.value})}
+              >
+                <option value="Announcement">Announcement</option>
+                <option value="System Maintenance">System Maintenance</option>
+                <option value="Policy Update">Policy Update</option>
+                <option value="Weather Warning">Weather Warning</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Severity Level</label>
+              <select 
+                className="form-input" 
+                value={broadcastForm.severity} 
+                onChange={e => setBroadcastForm({...broadcastForm, severity: e.target.value})}
+              >
+                <option value="Info">Info (Blue)</option>
+                <option value="Medium">Medium (Yellow)</option>
+                <option value="High">High (Red)</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label">Message Content</label>
+            <textarea 
+              className="form-input" 
+              rows="5" 
+              placeholder="Enter the message you want everyone to see..."
+              value={broadcastForm.message}
+              onChange={e => setBroadcastForm({...broadcastForm, message: e.target.value})}
+              required
+            ></textarea>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+              Tip: Keep it concise and professional.
+            </p>
+          </div>
+          
+          <div className="flex justify-end mt-md">
+            <button type="submit" className="btn btn-primary" disabled={broadcasting}>
+               <Bell size={18} /> {broadcasting ? 'Sending Broadcast...' : 'Send Broadcast to All Users'}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div className="card" style={{ backgroundColor: '#fff7ed', border: '1px solid #ffedd5' }}>
+        <h4 style={{ margin: 0, color: '#9a3412' }}>Note of Caution</h4>
+        <p style={{ fontSize: '0.85rem', color: '#9a3412', marginTop: '0.5rem' }}>
+          Broadcasts are permanent system logs. Please double-check for typos before sending, as these alerts will trigger for every active user account immediately.
+        </p>
       </div>
     </div>
   );
