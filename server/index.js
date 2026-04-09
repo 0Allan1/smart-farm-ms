@@ -20,9 +20,15 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGIN || 'http://localhost:5173'
+  origin: true, 
+  credentials: true
 }));
 app.use(express.json());
+
+// Root health check
+app.get('/', (req, res) => {
+  res.json({ status: 'SFMS Backend is Live', version: '1.0.0', time: new Date().toISOString() });
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
