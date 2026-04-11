@@ -142,9 +142,49 @@ const broadcastAlert = async (req, res) => {
   }
 };
 
+const syncOfficerAccess = async (req, res) => {
+  try {
+    if (req.user.role !== 'Admin') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const farmers = await prisma.user.findMany({ where: { role: 'Farmer' }, select: { id: true } });
+    const officers = await prisma.user.findMany({ where: { role: 'Extension Officer' }, select: { id: true } });
+
+    let linksCreated = 0;
+    for (const officer of officers) {
+      for (const farmer of farmers) {
+        await prisma.officerAccess.upsert({
+          where: {
+            farmerId_officerId: {
+              farmerId: farmer.id,
+              officerId: officer.id
+            }
+          },
+          update: {},
+          create: {
+            farmerId: farmer.id,
+            officerId: officer.id,
+            status: 'APPROVED'
+          }
+        });
+        linksCreated++;
+      }
+    }
+
+    res.status(200).json({ 
+      message: `Sync complete. Verified links for ${officers.length} officers and ${farmers.length} farmers.` 
+    });
+  } catch (error) {
+    console.error('Sync access error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 module.exports = {
   getSystemStats,
   getAllUsers,
   provisionOfficer,
-  broadcastAlert
+  broadcastAlert,
+  syncOfficerAccess
 };

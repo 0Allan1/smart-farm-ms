@@ -14,6 +14,7 @@ const AdminDashboard = () => {
   const [provisioning, setProvisioning] = useState(false);
   const [broadcastForm, setBroadcastForm] = useState({ type: 'Announcement', severity: 'Info', message: '' });
   const [broadcasting, setBroadcasting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     const fetchAdminData = async () => {
@@ -67,6 +68,20 @@ const AdminDashboard = () => {
       alert('Error: ' + (error.response?.data?.error || error.message));
     } finally {
       setBroadcasting(false);
+    }
+  };
+
+  const handleSyncAccess = async () => {
+    if (!window.confirm('This will link EVERY farmer to EVERY extension officer. Continue?')) return;
+    
+    setSyncing(true);
+    try {
+      const response = await api.post('/admin/sync-access');
+      alert(response.data.message);
+    } catch (error) {
+      alert('Sync Failed: ' + (error.response?.data?.error || error.message));
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -162,16 +177,19 @@ const AdminDashboard = () => {
     <div className="animate-fade-in flex-col gap-lg">
       <div className="flex justify-between items-center mb-md">
         <div>
-          <h2 style={{ margin: 0 }}>Registered Personnel</h2>
-          <p style={{ color: 'var(--text-secondary)' }}>Manage farmers and extension officers.</p>
+        <h2 style={{ margin: 0 }}>System Users</h2>
         </div>
         <div className="flex gap-sm">
-           <div className="relative">
-             <Search size={18} style={{ position: 'absolute', left: 10, top: 10, color: 'var(--text-secondary)' }} />
-             <input type="text" className="form-input" style={{ paddingLeft: '2.5rem' }} placeholder="Search users..." />
-           </div>
+          <button 
+            className="btn btn-secondary" 
+            onClick={handleSyncAccess}
+            disabled={syncing}
+          >
+            <RefreshCcw size={18} className={syncing ? 'animate-spin' : ''} />
+            {syncing ? 'Syncing...' : 'Sync Managed Data'}
+          </button>
           <button className="btn btn-primary" onClick={() => setShowProvisionModal(true)}>
-            <Users size={16} /> Provision Officer
+            <UserPlus size={18} /> Provision Officer
           </button>
         </div>
       </div>
