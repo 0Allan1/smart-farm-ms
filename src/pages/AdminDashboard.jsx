@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Users, Server, Activity, Settings, Database, MessageSquare, LogOut, Search, Sprout, Bell } from 'lucide-react';
+import { Shield, Users, Server, Activity, Settings, Database, MessageSquare, LogOut, Search, Sprout, Bell, RefreshCcw, UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 
